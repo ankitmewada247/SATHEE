@@ -1,0 +1,46 @@
+🔌 APIs need
+1. Authentication API
+Handles registration, login and OTP.
+
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/verify-mobile-otp
+POST /api/auth/verify-email-otp
+POST /api/auth/forgot-password
+GET  /api/auth/profile
+
+
+2. Vehicle API 🚗
+
+GET    /api/vehicles
+POST   /api/vehicles
+PUT    /api/vehicles/:id
+DELETE /api/vehicles/:id
+PUT    /api/vehicles/:id/primary
+
+For example:
+{
+  "type": "car",
+  "vehicleNumber": "MP04AB1234",
+  "brand": "Tata",
+  "model": "Nexon EV",
+  "batteryCapacity": 40,
+  "connector": "CCS2"
+}
+
+3. Charging Station API ⚡
+GET /api/stations
+GET /api/stations/:id
+GET /api/stations/:id/chargers
+GET /api/stations/nearby
+
+Station name
+Location
+Latitude
+Longitude
+Available chargers
+Power
+Connector
+Price
+Rating
+Opening hours
