@@ -2,6 +2,9 @@
 SATHEE : Smart AI-powered Transportation & High-efficiency EV Ecosystem
  “Predict. Optimize. Charge. Power the Future.”
 
+ ## Sathee Video
+ https://drive.google.com/file/d/1UH2VXh-go_NtNCWdvcCbDZLtMDJOZYla/view?usp=drivesdk
+
 ## 👥 Team Members
   ```
 Ankit Mewada
