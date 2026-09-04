@@ -17,7 +17,7 @@ Rongali Srilakshmi Tejaswini
 
 ## 🚀 INSTALLATION
 ## 1. Clone the repository
-git clone https://github.com/YOUR-USERNAME/sathee.git
+git clone https://github.com/ankitmewada247/SATHEE
 ## 2. Enter the project directory
 cd sathee
 ## 3. Install frontend dependencies
