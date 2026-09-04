@@ -15,6 +15,8 @@ Rongali Srilakshmi Tejaswini
 ```
 <img width="1312" height="522" alt="Screenshot 2026-09-04 212901" src="https://github.com/user-attachments/assets/2fd33271-4eb1-466b-9c33-1e7a313b9790" />
 
+## 👉🏻 Quick Start
+
 ## 🚀 INSTALLATION
 ## 1. Clone the repository
 git clone https://github.com/ankitmewada247/SATHEE
