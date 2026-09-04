@@ -317,50 +317,201 @@
       const mapContainerRef = useRef(null);
       const leafletMapRef = useRef(null);
 
-      useEffect(() => {
-        if ((activeTab === 'FIND_CHARGER' || activeTab === 'OVERVIEW' || activeTab === 'SPATIAL') && mapContainerRef.current) {
-          if (!leafletMapRef.current) {
-            const map = L.map(mapContainerRef.current).setView([20.5937, 78.9629], 5); // India center
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '&copy; OpenStreetMap contributors | SATHEE ⚡ GIS'
-            }).addTo(map);
-            leafletMapRef.current = map;
-          }
+      // ============================================================
+// SATHEE SMART MAP
+// ============================================================
 
-          // Render Markers
-          leafletMapRef.current.eachLayer((layer) => {
-            if (layer instanceof L.Marker) {
-              leafletMapRef.current.removeLayer(layer);
-            }
-          });
+const mapMarkersRef = useRef([]);
 
-          DEMO_STATIONS.forEach(st => {
-            const markerColor = st.status === 'Available' ? '#22c55e' : st.status === 'Limited' ? '#eab308' : '#ef4444';
-            const customIcon = L.divIcon({
-              className: 'custom-map-pin',
-              html: `<div style="background-color: ${markerColor}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #0f172a; box-shadow: 0 0 10px ${markerColor};"></div>`
-            });
+useEffect(() => {
 
-            const marker = L.marker([st.lat, st.lng], { icon: customIcon }).addTo(leafletMapRef.current);
-            marker.bindPopup(`
-              <div style="color: #0f172a; font-family: sans-serif;">
-                <h4 style="font-weight: bold; margin: 0 0 4px 0;">${st.name}</h4>
-                <p style="font-size: 12px; margin: 0 0 6px 0;">${st.address}</p>
-                <div style="font-size: 11px; font-weight: 600; color: #16a34a;">${st.availableChargers} / ${st.totalChargers} Chargers Free • ₹${st.pricePerKwh}/kWh</div>
-              </div>
-            `);
-            marker.on('click', () => {
-              setSelectedStation(st);
-            });
-          });
+  const mapIsActive =
+    activeTab === 'FIND_CHARGER' ||
+    activeTab === 'OVERVIEW' ||
+    activeTab === 'SPATIAL';
 
-          // Focus on active city search if matched
-          const matched = DEMO_STATIONS.find(s => s.city.toLowerCase() === searchQuery.toLowerCase());
-          if (matched) {
-            leafletMapRef.current.setView([matched.lat, matched.lng], 12);
-          }
-        }
-      }, [activeTab, searchQuery]);
+  if (!mapIsActive || !mapContainerRef.current) {
+    return;
+  }
+
+  // Create map only once
+  if (!leafletMapRef.current) {
+
+    const map = L.map(mapContainerRef.current)
+      .setView([12.9716, 77.5946], 11);
+
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        attribution:
+          '&copy; OpenStreetMap contributors | SATHEE ⚡ GIS'
+      }
+    ).addTo(map);
+
+    leafletMapRef.current = map;
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+  }
+
+  const map = leafletMapRef.current;
+
+  // Remove old markers
+  mapMarkersRef.current.forEach(marker => {
+    map.removeLayer(marker);
+  });
+
+  mapMarkersRef.current = [];
+
+  // Show filtered stations on user map
+  const stations =
+    activeTab === 'FIND_CHARGER'
+      ? filteredStations
+      : DEMO_STATIONS;
+
+  // Add station markers
+  stations.forEach(st => {
+
+    const markerColor =
+      st.status === 'Available'
+        ? '#22c55e'
+        : st.status === 'Limited'
+          ? '#eab308'
+          : '#ef4444';
+
+    const icon = L.divIcon({
+      className: 'sathee-map-marker',
+
+      html: `
+        <div style="
+          width:20px;
+          height:20px;
+          background:${markerColor};
+          border:3px solid #0f172a;
+          border-radius:50%;
+          box-shadow:0 0 12px ${markerColor};
+        "></div>
+      `,
+
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+
+    const marker = L.marker(
+      [st.lat, st.lng],
+      { icon }
+    );
+
+    marker.bindPopup(`
+      <div style="
+        min-width:220px;
+        color:#0f172a;
+        font-family:Arial,sans-serif;
+      ">
+
+        <div style="
+          color:#059669;
+          font-size:10px;
+          font-weight:bold;
+          margin-bottom:5px;
+        ">
+          ${st.discom} • ${st.city}
+        </div>
+
+        <h3 style="
+          margin:0 0 5px;
+          font-size:15px;
+          font-weight:800;
+        ">
+          ${st.name}
+        </h3>
+
+        <p style="
+          font-size:11px;
+          margin:0 0 8px;
+        ">
+          ${st.address}
+        </p>
+
+        <div style="
+          font-size:11px;
+          line-height:1.7;
+        ">
+
+          ⚡ Power:
+          <strong>${st.maxPower}</strong>
+          <br/>
+
+          🔌 Available:
+          <strong>
+            ${st.availableChargers}/${st.totalChargers}
+          </strong>
+          <br/>
+
+          💰 Price:
+          <strong>
+            ₹${st.pricePerKwh}/kWh
+          </strong>
+
+        </div>
+
+        <button
+          onclick="window.open(
+            'https://www.google.com/maps/dir/?api=1&destination=${st.lat},${st.lng}',
+            '_blank'
+          )"
+          style="
+            width:100%;
+            margin-top:10px;
+            padding:8px;
+            border:0;
+            border-radius:8px;
+            background:#10b981;
+            color:#022c22;
+            font-weight:800;
+            cursor:pointer;
+          "
+        >
+          🧭 Get Directions
+        </button>
+
+      </div>
+    `);
+
+    marker.on('click', () => {
+      setSelectedStation(st);
+    });
+
+    marker.addTo(map);
+
+    mapMarkersRef.current.push(marker);
+  });
+
+  // Automatically zoom to visible stations
+  if (
+    activeTab === 'FIND_CHARGER' &&
+    stations.length > 0
+  ) {
+
+    const bounds = L.latLngBounds(
+      stations.map(st => [
+        st.lat,
+        st.lng
+      ])
+    );
+
+    map.fitBounds(bounds, {
+      padding: [30, 30],
+      maxZoom: 14
+    });
+  }
+
+}, [
+  activeTab,
+  filteredStations,
+  searchQuery
+]);
 
       // --- AUTHENTICATION HANDLERS ---
       const handleRegisterSubmit = (e) => {
@@ -454,17 +605,53 @@
         setActiveTab('HISTORY');
         alert('✓ Charging session completed and recorded to history!');
       };
+      // ============================================================
+// SMART STATION FILTER
+// ============================================================
 
-      // --- FILTERED STATIONS ---
-      const filteredStations = useMemo(() => {
-        return DEMO_STATIONS.filter(st => {
-          const matchQuery = st.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             st.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             st.state.toLowerCase().includes(searchQuery.toLowerCase());
-          const matchSpeed = filterSpeed === 'ALL' || st.speedType === filterSpeed;
-          return matchQuery && matchSpeed;
-        });
-      }, [searchQuery, filterSpeed]);
+const filteredStations = useMemo(() => {
+
+  const query = searchQuery.trim().toLowerCase();
+
+  return DEMO_STATIONS.filter(st => {
+
+    const searchableText = [
+      st.name,
+      st.city,
+      st.state,
+      st.address,
+      st.discom
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    const matchQuery =
+      query === '' ||
+      searchableText.includes(query);
+
+    const matchSpeed =
+      filterSpeed === 'ALL' ||
+      st.speedType === filterSpeed;
+
+    const matchConnector =
+      filterConnector === 'ALL' ||
+      st.chargers.some(
+        charger =>
+          charger.connector === filterConnector
+      );
+
+    return (
+      matchQuery &&
+      matchSpeed &&
+      matchConnector
+    );
+  });
+
+}, [
+  searchQuery,
+  filterSpeed,
+  filterConnector
+]);
 
       return (
         <div className="flex flex-col min-h-screen">
