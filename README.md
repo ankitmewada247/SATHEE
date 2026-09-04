@@ -3,14 +3,47 @@ SATHEE : Smart AI-powered Transportation & High-efficiency EV Ecosystem
  “Predict. Optimize. Charge. Power the Future.”
 
 ## 👥 Team Members
-Ankit Mewada 
+  ```
+Ankit Mewada
 Diksha Dutta  
 Krishnapal Rajput  
 DNS Smitha Devi  
 Rongali Srilakshmi Tejaswini 
+```
+<img width="1312" height="522" alt="Screenshot 2026-09-04 212901" src="https://github.com/user-attachments/assets/2fd33271-4eb1-466b-9c33-1e7a313b9790" />
 
-
-🔄 SYSTEM WORKFLOW
+```
+## 📁 PROJECT STRUCTURE
+```text
+SATHEE/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── data/
+│   │   ├── services/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   │
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── backend/
+│   ├── src/
+│   │   ├── routes/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   └── server.js
+│   │
+│   └── package.json
+│
+├── README.md
+├── .gitignore
+└── .env.example
+```
+## 🔄 SYSTEM WORKFLOW
 EV Users
 Charging Stations
 Traffic
@@ -18,7 +51,8 @@ Weather
 EV Registration Data
 Charging Sessions
 Grid / Utility Data
-GIS Data
+```text
+   GIS Data
         │
         ▼
    Data Ingestion
@@ -56,12 +90,13 @@ GIS Data
         ▼
  SATHEE Decision Support
 
+```
 
 
 
 
 
-🏗️ SYSTEM ARCHITECTURE
+## 🏗️ SYSTEM ARCHITECTURE
 
 
                     SATHEE
@@ -92,4 +127,10 @@ GIS Data
                        │
                        ▼
                    Database
+```
+
+```
+
+
+
 
