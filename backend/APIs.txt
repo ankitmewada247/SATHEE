@@ -44,3 +44,27 @@ Connector
 Price
 Rating
 Opening hours
+
+🔄 Overall connection
+
+                  SATHEE FRONTEND
+                       │
+                       │ HTTP Requests
+                       ▼
+                ┌──────────────┐
+                │   server.js  │
+                └──────┬───────┘
+                       │
+       ┌───────────────┼────────────────┐
+       ▼               ▼                ▼
+    Auth API       Booking API      Station API
+       │               │                │
+       └───────────────┼────────────────┘
+                       ▼
+                   DATABASE
+                       │
+                       ▼
+                 AI / ML ENGINE
+                       │
+                       ▼
+                GRID INTELLIGENCE
