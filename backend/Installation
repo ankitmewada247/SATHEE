@@ -1,0 +1,21 @@
+🚀 INSTALLATION
+1. Clone the repository
+git clone https://github.com/YOUR-USERNAME/sathee.git
+2. Enter the project directory
+cd sathee
+3. Install frontend dependencies
+cd frontend
+npm install
+4. Start frontend
+npm run dev
+Backend Setup
+Open another terminal:
+cd backend
+npm install
+
+Start the backend:
+npm run dev
+or:
+npm start
+
+
