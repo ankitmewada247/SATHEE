@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SATHEE ⚡ | Smart AI EV Charging & Grid Intelligence Platform</title>
+  <title>SATHEE | Smart AI EV Charging & Grid Intelligence Platform</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -215,163 +215,7 @@
       }
     ];
 
-    const DEMO_USER_INITIAL = {
-      fullName: 'Ankit Sharma',
-      mobile: '+91 9876543210',
-      email: 'ankit@example.com',
-      mobileVerified: true,
-      emailVerified: true
-    };
-
-    const INITIAL_VEHICLES = [
-      {
-        id: 'V-01',
-        type: 'Car',
-        regNumber: 'KA 01 AB 1234',
-        brand: 'Tata',
-        model: 'Nexon EV',
-        batteryCapacity: '40 kWh',
-        connectorType: 'CCS2',
-        isPrimary: true
-      },
-      {
-        id: 'V-02',
-        type: 'Bike',
-        regNumber: 'KA 05 M 9988',
-        brand: 'Ather',
-        model: '450X',
-        batteryCapacity: '3.7 kWh',
-        connectorType: 'Bharat AC',
-        isPrimary: false
-      }
-    ];
-
-    // --- MAIN APP COMPONENT ---
-    function App() {
-      // Role Switch state: 'USER' or 'OPERATOR'
-      const [role, setRole] = useState('USER');
-      const [activeTab, setActiveTab] = useState('FIND_CHARGER'); // USER: FIND_CHARGER, MY_BOOKINGS, MY_VEHICLES, CHARGING_SIM, HISTORY, NOTIFICATIONS | OPERATOR: OVERVIEW, DEMAND, SPATIAL, SMART_CHARGING, GRID_CAPACITY, SITE_SELECTION, WHAT_IF, ANALYTICS
-      
-      // Auth & User State
-      const [authModal, setAuthModal] = useState(null); // 'LOGIN', 'REGISTER', 'VERIFY_MOBILE', 'VERIFY_EMAIL'
-      const [currentUser, setCurrentUser] = useState(DEMO_USER_INITIAL);
-      const [authForm, setAuthForm] = useState({ fullName: '', mobile: '', email: '', password: '', confirmPassword: '' });
-      const [mobileOtp, setMobileOtp] = useState('');
-      const [emailOtp, setEmailOtp] = useState('');
-      const [authError, setAuthError] = useState('');
-      
-      // EV User State
-      const [vehicles, setVehicles] = useState(INITIAL_VEHICLES);
-      const [selectedVehicleId, setSelectedVehicleId] = useState('V-01');
-      const [bookings, setBookings] = useState([
-        {
-          id: 'SAT-IND-2026-0001',
-          station: DEMO_STATIONS[0],
-          chargerId: 'C-02',
-          vehicle: INITIAL_VEHICLES[0],
-          date: '2026-08-31',
-          timeSlot: '08:00 PM - 09:00 PM',
-          cost: 500,
-          energyKwh: 25,
-          status: 'Upcoming',
-          createdAt: new Date().toISOString()
-        }
-      ]);
-      const [savedStationIds, setSavedStationIds] = useState(['ST-BLR-01']);
-      const [activeChargingSession, setActiveChargingSession] = useState(null);
-      const [chargingHistory, setChargingHistory] = useState([
-        { date: '28 Aug 2026', city: 'Mumbai', energyKwh: 18.2, durationMin: 35, cost: 328 },
-        { date: '25 Aug 2026', city: 'Hyderabad', energyKwh: 21.4, durationMin: 39, cost: 385 }
-      ]);
-      const [notifications, setNotifications] = useState([
-        { id: 1, type: 'info', title: 'Welcome to SATHEE!', message: 'Start searching stations across India.', time: 'Just now' },
-        { id: 2, type: 'success', title: 'Off-Peak Savings Available', message: 'Charge after 9 PM to get 20% discount on electricity tariffs.', time: '2 hours ago' }
-      ]);
-
-      // Booking Flow State
-      const [selectedStation, setSelectedStation] = useState(DEMO_STATIONS[0]);
-      const [bookingStep, setBookingStep] = useState(1); // 1: Vehicle, 2: Charger, 3: Date/Time, 4: Summary/Payment, 5: Confirmation
-      const [bookingDraft, setBookingDraft] = useState({
-        chargerId: 'C-02',
-        date: new Date().toISOString().split('T')[0],
-        timeSlot: '08:00 PM - 09:00 PM',
-        upiId: 'ankit@upi'
-      });
-      const [showAiRecommendation, setShowAiRecommendation] = useState(false);
-
-
-     // Search & Map Filters
-     const [searchQuery, setSearchQuery] = useState('Bengaluru');
-     const [filterSpeed, setFilterSpeed] = useState('ALL');
-     const [filterConnector, setFilterConnector] = useState('ALL');
-
-    // Map controls
-     const [showDemandLayer, setShowDemandLayer] = useState(false);
-     const [showRecommendedSites, setShowRecommendedSites] = useState(false);
-     const [locationError, setLocationError] = useState('');
-     const [userLocation, setUserLocation] = useState(null);
-      
-
-    
-      // Operator State
-      const [operatorDiscom, setOperatorDiscom] = useState('BESCOM');
-      const [operatorState, setOperatorState] = useState('Karnataka');
-      const [whatIfScenario, setWhatIfScenario] = useState({ adoptionRate: 20, trafficSurge: 15, tempExtreme: 0 });
-      const [mcdaWeights, setMcdaWeights] = useState({ demand: 30, traffic: 25, gridCap: 20, land: 15, commercial: 10 });
-
-      // Active vehicle helper
-      const currentVehicle = useMemo(() => vehicles.find(v => v.id === selectedVehicleId) || vehicles[0], [vehicles, selectedVehicleId]);
-
-     
-// MAP REFERENCES
-
-const mapContainerRef = useRef(null);
-const leafletMapRef = useRef(null);
-
-const stationLayerRef = useRef(null);
-const demandLayerRef = useRef(null);
-const recommendedLayerRef = useRef(null);
-const userLocationLayerRef = useRef(null);
-      
-
-      useEffect(() => {
-        if ((activeTab === 'FIND_CHARGER' || activeTab === 'OVERVIEW' || activeTab === 'SPATIAL') && mapContainerRef.current) {
-          if (!leafletMapRef.current) {
-            const map = L.map(mapContainerRef.current).setView([20.5937, 78.9629], 5); // India center
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '&copy; OpenStreetMap contributors | SATHEE ⚡ GIS'
-            }).addTo(map);
-            leafletMapRef.current = map;
-          }
-
-          // Render Markers
-          leafletMapRef.current.eachLayer((layer) => {
-            if (layer instanceof L.Marker) {
-              leafletMapRef.current.removeLayer(layer);
-            }
-          });
-
-          DEMO_STATIONS.forEach(st => {
-            const markerColor = st.status === 'Available' ? '#22c55e' : st.status === 'Limited' ? '#eab308' : '#ef4444';
-            const customIcon = L.divIcon({
-              className: 'custom-map-pin',
-              html: `<div style="background-color: ${markerColor}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #0f172a; box-shadow: 0 0 10px ${markerColor};"></div>`
-            });
-
-            const marker = L.marker([st.lat, st.lng], { icon: customIcon }).addTo(leafletMapRef.current);
-            marker.bindPopup(`
-              <div style="color: #0f172a; font-family: sans-serif;">
-                <h4 style="font-weight: bold; margin: 0 0 4px 0;">${st.name}</h4>
-                <p style="font-size: 12px; margin: 0 0 6px 0;">${st.address}</p>
-                <div style="font-size: 11px; font-weight: 600; color: #16a34a;">${st.availableChargers} / ${st.totalChargers} Chargers Free • ₹${st.pricePerKwh}/kWh</div>
-              </div>
-            `);
-            marker.on('click', () => {
-              setSelectedStation(st);
-            });
-          });
-
-          // ============================================================
+// ============================================================
 // DEMO EV DEMAND HOTSPOTS
 // These values are simulated for the academic prototype.
 // Replace them later with backend/ML predictions.
@@ -484,50 +328,528 @@ const DEMO_RECOMMENDED_SITES = [
   }
 ];
 
-          // Focus on active city search if matched
-          const matched = DEMO_STATIONS.find(s => s.city.toLowerCase() === searchQuery.toLowerCase());
-          if (matched) {
-            leafletMapRef.current.setView([matched.lat, matched.lng], 12);
-          }
-        }
-      }, [activeTab, searchQuery]);
+    const DEMO_USER_INITIAL = {
+      fullName: 'Ankit Sharma',
+      mobile: '+91 9876543210',
+      email: 'ankit@example.com',
+      mobileVerified: true,
+      emailVerified: true
+    };
 
-      // --- AUTHENTICATION HANDLERS ---
-      const handleRegisterSubmit = (e) => {
-        e.preventDefault();
-        if (authForm.password !== authForm.confirmPassword) {
-          setAuthError('Passwords do not match');
+    const INITIAL_VEHICLES = [
+      {
+        id: 'V-01',
+        type: 'Car',
+        regNumber: 'KA 01 AB 1234',
+        brand: 'Tata',
+        model: 'Nexon EV',
+        batteryCapacity: '40 kWh',
+        connectorType: 'CCS2',
+        isPrimary: true
+      },
+      {
+        id: 'V-02',
+        type: 'Bike',
+        regNumber: 'KA 05 M 9988',
+        brand: 'Ather',
+        model: '450X',
+        batteryCapacity: '3.7 kWh',
+        connectorType: 'Bharat AC',
+        isPrimary: false
+      }
+    ];
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      // Role Switch state: 'USER' or 'OPERATOR'
+      const [role, setRole] = useState('USER');
+      const [activeTab, setActiveTab] = useState('FIND_CHARGER'); // USER: FIND_CHARGER, MY_BOOKINGS, MY_VEHICLES, CHARGING_SIM, HISTORY, NOTIFICATIONS | OPERATOR: OVERVIEW, DEMAND, SPATIAL, SMART_CHARGING, GRID_CAPACITY, SITE_SELECTION, WHAT_IF, ANALYTICS
+      
+      // ============================================================
+      // AUTHENTICATION STATE
+      // ============================================================
+      const [authModal, setAuthModal] = useState(null);
+      // LOGIN, REGISTER, VERIFY_MOBILE, VERIFY_EMAIL, REGISTER_SUCCESS
+      const [currentUser, setCurrentUser] = useState(DEMO_USER_INITIAL);
+      const [authForm, setAuthForm] = useState({
+        fullName: '',
+        mobile: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+      const [mobileOtp, setMobileOtp] = useState('');
+      const [emailOtp, setEmailOtp] = useState('');
+      const [generatedMobileOtp, setGeneratedMobileOtp] = useState('');
+      const [generatedEmailOtp, setGeneratedEmailOtp] = useState('');
+      const [mobileOtpTimer, setMobileOtpTimer] = useState(30);
+      const [emailOtpTimer, setEmailOtpTimer] = useState(30);
+      const [authError, setAuthError] = useState('');
+      const [authSuccess, setAuthSuccess] = useState('');
+      const [showPassword, setShowPassword] = useState(false);
+      const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+      
+      // EV User State
+      const [vehicles, setVehicles] = useState(INITIAL_VEHICLES);
+      const [selectedVehicleId, setSelectedVehicleId] = useState('V-01');
+      const [bookings, setBookings] = useState([
+        {
+          id: 'SAT-IND-2026-0001',
+          station: DEMO_STATIONS[0],
+          chargerId: 'C-02',
+          vehicle: INITIAL_VEHICLES[0],
+          date: '2026-08-31',
+          timeSlot: '08:00 PM - 09:00 PM',
+          cost: 500,
+          energyKwh: 25,
+          status: 'Upcoming',
+          createdAt: new Date().toISOString()
+        }
+      ]);
+      const [savedStationIds, setSavedStationIds] = useState(['ST-BLR-01']);
+      const [activeChargingSession, setActiveChargingSession] = useState(null);
+      const [chargingHistory, setChargingHistory] = useState([
+        { date: '28 Aug 2026', city: 'Mumbai', energyKwh: 18.2, durationMin: 35, cost: 328 },
+        { date: '25 Aug 2026', city: 'Hyderabad', energyKwh: 21.4, durationMin: 39, cost: 385 }
+      ]);
+      const [notifications, setNotifications] = useState([
+        { id: 1, type: 'info', title: 'Welcome to SATHEE!', message: 'Start searching stations across India.', time: 'Just now' },
+        { id: 2, type: 'success', title: 'Off-Peak Savings Available', message: 'Charge after 9 PM to get 20% discount on electricity tariffs.', time: '2 hours ago' }
+      ]);
+
+      // Booking Flow State
+      const [selectedStation, setSelectedStation] = useState(DEMO_STATIONS[0]);
+      const [bookingStep, setBookingStep] = useState(1); // 1: Vehicle, 2: Charger, 3: Date/Time, 4: Summary/Payment, 5: Confirmation
+      const [bookingDraft, setBookingDraft] = useState({
+        chargerId: 'C-02',
+        date: new Date().toISOString().split('T')[0],
+        timeSlot: '08:00 PM - 09:00 PM',
+        upiId: 'ankit@upi'
+      });
+      const [showAiRecommendation, setShowAiRecommendation] = useState(false);
+
+
+     // Search & Map Filters
+     const [searchQuery, setSearchQuery] = useState('Bengaluru');
+     const [filterSpeed, setFilterSpeed] = useState('ALL');
+     const [filterConnector, setFilterConnector] = useState('ALL');
+
+    // Map controls
+     const [showDemandLayer, setShowDemandLayer] = useState(false);
+     const [showRecommendedSites, setShowRecommendedSites] = useState(false);
+     const [locationError, setLocationError] = useState('');
+     const [userLocation, setUserLocation] = useState(null);
+      
+
+    
+      // Operator State
+      const [operatorDiscom, setOperatorDiscom] = useState('BESCOM');
+      const [operatorState, setOperatorState] = useState('Karnataka');
+      const [whatIfScenario, setWhatIfScenario] = useState({ adoptionRate: 20, trafficSurge: 15, tempExtreme: 0 });
+      const [mcdaWeights, setMcdaWeights] = useState({ demand: 30, traffic: 25, gridCap: 20, land: 15, commercial: 10 });
+
+      // Active vehicle helper
+      const currentVehicle = useMemo(() => vehicles.find(v => v.id === selectedVehicleId) || vehicles[0], [vehicles, selectedVehicleId]);
+
+     
+      // ============================================================
+      // MAP REFERENCES
+      // ============================================================
+      const mapContainerRef = useRef(null);
+      const leafletMapRef = useRef(null);
+      const mapElementRef = useRef(null);
+      const stationLayerRef = useRef(null);
+      const demandLayerRef = useRef(null);
+      const recommendedLayerRef = useRef(null);
+      const userLocationLayerRef = useRef(null);
+
+      // ============================================================
+      // SATHEE INTERACTIVE MAP
+      // User map + operator overview map
+      // ============================================================
+      useEffect(() => {
+        const shouldShowMap =
+          (role === 'USER' && activeTab === 'FIND_CHARGER') ||
+          (role === 'OPERATOR' && activeTab === 'OVERVIEW');
+
+        const container = mapContainerRef.current;
+
+        if (!shouldShowMap || !container) {
+          if (leafletMapRef.current && mapElementRef.current && !container) {
+            leafletMapRef.current.remove();
+            leafletMapRef.current = null;
+            mapElementRef.current = null;
+          }
           return;
         }
+
+        // Re-create the Leaflet instance if React has mounted a new map container.
+        if (leafletMapRef.current && mapElementRef.current !== container) {
+          leafletMapRef.current.remove();
+          leafletMapRef.current = null;
+          mapElementRef.current = null;
+        }
+
+        if (!leafletMapRef.current) {
+          const initialCenter = role === 'OPERATOR'
+            ? [20.5937, 78.9629]
+            : [12.9716, 77.5946];
+
+          const initialZoom = role === 'OPERATOR' ? 5 : 11;
+          const map = L.map(container).setView(initialCenter, initialZoom);
+
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors | SATHEE GIS'
+          }).addTo(map);
+
+          leafletMapRef.current = map;
+          mapElementRef.current = container;
+
+          stationLayerRef.current = L.layerGroup().addTo(map);
+          demandLayerRef.current = L.layerGroup();
+          recommendedLayerRef.current = L.layerGroup();
+          userLocationLayerRef.current = L.layerGroup();
+        }
+
+        const map = leafletMapRef.current;
+
+        stationLayerRef.current.clearLayers();
+        demandLayerRef.current.clearLayers();
+        recommendedLayerRef.current.clearLayers();
+        userLocationLayerRef.current.clearLayers();
+
+        // ------------------------------------------------------------
+        // STATION MARKERS
+        // ------------------------------------------------------------
+        const stationsToShow = role === 'OPERATOR'
+          ? DEMO_STATIONS
+          : filteredStations;
+
+        stationsToShow.forEach((st) => {
+          const markerColor =
+            st.status === 'Available' ? '#22c55e' :
+            st.status === 'Limited' ? '#eab308' : '#ef4444';
+
+          const customIcon = L.divIcon({
+            className: 'custom-map-pin',
+            html: `<div style="background-color:${markerColor};width:18px;height:18px;border-radius:50%;border:3px solid #0f172a;box-shadow:0 0 10px ${markerColor};"></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+          });
+
+          const marker = L.marker([st.lat, st.lng], { icon: customIcon });
+
+          marker.bindPopup(`
+            <div style="color:#0f172a;font-family:Arial,sans-serif;min-width:210px;">
+              <div style="color:#059669;font-size:10px;font-weight:800;margin-bottom:5px;">
+                ${st.discom} • ${st.city}
+              </div>
+              <h4 style="font-weight:800;font-size:15px;margin:0 0 5px;">
+                ${st.name}
+              </h4>
+              <p style="font-size:12px;margin:0 0 7px;">
+                ${st.address}
+              </p>
+              <div style="font-size:11px;line-height:1.7;">
+                <b>${st.maxPower}</b><br>
+                <b>${st.availableChargers}/${st.totalChargers}</b> chargers available<br>
+                <b>₹${st.pricePerKwh}/kWh</b>
+              </div>
+              <button
+                onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${st.lat},${st.lng}','_blank')"
+                style="width:100%;margin-top:10px;padding:8px;border:0;border-radius:8px;background:#10b981;color:#022c22;font-weight:800;cursor:pointer;"
+              >
+                Get Directions
+              </button>
+            </div>
+          `);
+
+          marker.on('click', () => setSelectedStation(st));
+          stationLayerRef.current.addLayer(marker);
+        });
+
+        // ------------------------------------------------------------
+        // DEMAND HOTSPOTS — USER MAP ONLY
+        // ------------------------------------------------------------
+        if (role === 'USER' && showDemandLayer) {
+          DEMO_DEMAND_HOTSPOTS.forEach((hotspot) => {
+            const color = hotspot.demandScore >= 85
+              ? '#ef4444'
+              : hotspot.demandScore >= 75
+                ? '#f97316'
+                : '#eab308';
+
+            const circle = L.circleMarker([hotspot.lat, hotspot.lng], {
+              radius: 12 + hotspot.demandScore / 5,
+              color,
+              fillColor: color,
+              fillOpacity: 0.30,
+              weight: 2
+            });
+
+            circle.bindPopup(`
+              <div style="color:#0f172a;font-family:Arial,sans-serif;min-width:190px;">
+                <h4 style="font-weight:800;margin:0 0 6px;">${hotspot.name}</h4>
+                <div style="font-size:12px;line-height:1.7;">
+                  <b>AI Demand Score:</b> ${hotspot.demandScore}/100<br>
+                  <b>Predicted Load:</b> ${hotspot.predictedLoad}%<br>
+                  <b>Peak Time:</b> ${hotspot.peakTime}
+                </div>
+                <p style="font-size:10px;color:#64748b;margin-top:7px;">
+                  Simulated prototype prediction.
+                </p>
+              </div>
+            `);
+
+            demandLayerRef.current.addLayer(circle);
+          });
+
+          demandLayerRef.current.addTo(map);
+        }
+
+        // ------------------------------------------------------------
+        // AI RECOMMENDED SITES — USER MAP ONLY
+        // ------------------------------------------------------------
+        if (role === 'USER' && showRecommendedSites) {
+          DEMO_RECOMMENDED_SITES.forEach((site) => {
+            const icon = L.divIcon({
+              className: 'recommended-site-marker',
+              html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#8b5cf6;color:white;border:3px solid #ede9fe;border-radius:50%;font-size:16px;box-shadow:0 0 15px #8b5cf6;"></div>`,
+              iconSize: [32, 32],
+              iconAnchor: [16, 16]
+            });
+
+            const marker = L.marker([site.lat, site.lng], { icon });
+
+            marker.bindPopup(`
+              <div style="color:#0f172a;font-family:Arial,sans-serif;min-width:220px;">
+                <h4 style="font-weight:800;margin:0 0 7px;">${site.name}</h4>
+                <div style="font-size:12px;line-height:1.7;">
+                  <b>AI Suitability Score:</b> ${site.score}/100<br>
+                  <b>Demand:</b> ${site.demand}/100<br>
+                  <b>Traffic:</b> ${site.traffic}/100<br>
+                  <b>Grid Capacity:</b> ${site.gridCapacity}/100
+                </div>
+                <p style="font-size:11px;color:#475569;margin-top:8px;">
+                  ${site.reason}
+                </p>
+                <p style="font-size:10px;color:#64748b;margin-top:5px;">
+                  Simulated MCDA recommendation.
+                </p>
+              </div>
+            `);
+
+            recommendedLayerRef.current.addLayer(marker);
+          });
+
+          recommendedLayerRef.current.addTo(map);
+        }
+
+        // ------------------------------------------------------------
+        // USER LOCATION
+        // ------------------------------------------------------------
+        if (role === 'USER' && userLocation) {
+          const userMarker = L.circleMarker(
+            [userLocation.lat, userLocation.lng],
+            {
+              radius: 9,
+              color: '#2563eb',
+              fillColor: '#3b82f6',
+              fillOpacity: 0.9,
+              weight: 3
+            }
+          );
+
+          userMarker.bindPopup('<b>Your Current Location</b>');
+          userLocationLayerRef.current.addLayer(userMarker);
+          userLocationLayerRef.current.addTo(map);
+        }
+
+        // ------------------------------------------------------------
+        // MAP VIEW
+        // ------------------------------------------------------------
+        if (role === 'USER') {
+          const query = searchQuery.trim().toLowerCase();
+          const exactCity = DEMO_STATIONS.find(
+            st => st.city.toLowerCase() === query
+          );
+
+          if (exactCity) {
+            map.setView([exactCity.lat, exactCity.lng], 12, { animate: true });
+          } else if (filteredStations.length > 0) {
+            const bounds = L.latLngBounds(
+              filteredStations.map(st => [st.lat, st.lng])
+            );
+            map.fitBounds(bounds, { padding: [25, 25], maxZoom: 13 });
+          }
+        }
+
+        setTimeout(() => map.invalidateSize(), 100);
+
+      }, [
+        role,
+        activeTab,
+        searchQuery,
+        filterSpeed,
+        filterConnector,
+        showDemandLayer,
+        showRecommendedSites,
+        userLocation,
+        filteredStations
+      ]);
+
+      // Clean up Leaflet when the app unmounts.
+      useEffect(() => {
+        return () => {
+          if (leafletMapRef.current) {
+            leafletMapRef.current.remove();
+            leafletMapRef.current = null;
+            mapElementRef.current = null;
+          }
+        };
+      }, []);
+
+// ============================================================
+      // AUTHENTICATION HANDLERS
+      // ============================================================
+
+      const generateOtp = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      };
+
+      const handleRegisterSubmit = (e) => {
+        e.preventDefault();
         setAuthError('');
+        setAuthSuccess('');
+
+        if (authForm.fullName.trim().length < 3) {
+          setAuthError('Please enter your full name.');
+          return;
+        }
+
+        const cleanedMobile = authForm.mobile.replace(/\s/g, '').replace('+91', '');
+        const mobileRegex = /^[6-9]\d{9}$/;
+        if (!mobileRegex.test(cleanedMobile)) {
+          setAuthError('Please enter a valid 10-digit Indian mobile number.');
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(authForm.email.trim())) {
+          setAuthError('Please enter a valid email address.');
+          return;
+        }
+
+        if (authForm.password.length < 8) {
+          setAuthError('Password must contain at least 8 characters.');
+          return;
+        }
+
+        if (authForm.password !== authForm.confirmPassword) {
+          setAuthError('Passwords do not match.');
+          return;
+        }
+
+        const newMobileOtp = generateOtp();
+        const newEmailOtp = generateOtp();
+
+        setGeneratedMobileOtp(newMobileOtp);
+        setGeneratedEmailOtp(newEmailOtp);
+        setMobileOtp('');
+        setEmailOtp('');
+        setMobileOtpTimer(30);
+        setEmailOtpTimer(30);
         setAuthModal('VERIFY_MOBILE');
+
+        // Prototype mode: OTPs are generated locally.
+        console.log('SATHEE Mobile OTP:', newMobileOtp);
+        console.log('SATHEE Email OTP:', newEmailOtp);
       };
 
       const handleVerifyMobile = () => {
-        if (mobileOtp !== '123456') {
-          setAuthError('Invalid Mobile OTP. Use demo OTP: 123456');
+        setAuthError('');
+
+        if (mobileOtp.length !== 6) {
+          setAuthError('Please enter the 6-digit mobile OTP.');
           return;
         }
-        setAuthError('');
+
+        if (mobileOtp !== generatedMobileOtp) {
+          setAuthError('Invalid mobile OTP. Please try again.');
+          return;
+        }
+
+        setMobileOtp('');
+        setEmailOtpTimer(30);
         setAuthModal('VERIFY_EMAIL');
       };
 
       const handleVerifyEmail = () => {
-        if (emailOtp !== '654321') {
-          setAuthError('Invalid Email OTP. Use demo OTP: 654321');
+        setAuthError('');
+
+        if (emailOtp.length !== 6) {
+          setAuthError('Please enter the 6-digit email OTP.');
           return;
         }
-        setAuthError('');
+
+        if (emailOtp !== generatedEmailOtp) {
+          setAuthError('Invalid email OTP. Please try again.');
+          return;
+        }
+
+        const cleanedMobile = authForm.mobile.replace(/\s/g, '').replace('+91', '');
+
         setCurrentUser({
-          fullName: authForm.fullName || 'Demo EV User',
-          mobile: authForm.mobile || '+91 9876543210',
-          email: authForm.email || 'user@example.com',
+          fullName: authForm.fullName.trim(),
+          mobile: '+91 ' + cleanedMobile,
+          email: authForm.email.trim(),
           mobileVerified: true,
           emailVerified: true
         });
-        setAuthModal(null);
-        alert('🎉 Account successfully created and verified!');
+
+        setAuthError('');
+        setAuthSuccess('Account created successfully.');
+        setAuthModal('REGISTER_SUCCESS');
       };
+
+      const resendMobileOtp = () => {
+        if (mobileOtpTimer > 0) return;
+        const newOtp = generateOtp();
+        setGeneratedMobileOtp(newOtp);
+        setMobileOtp('');
+        setMobileOtpTimer(30);
+        setAuthError('');
+        console.log('New SATHEE Mobile OTP:', newOtp);
+      };
+
+      const resendEmailOtp = () => {
+        if (emailOtpTimer > 0) return;
+        const newOtp = generateOtp();
+        setGeneratedEmailOtp(newOtp);
+        setEmailOtp('');
+        setEmailOtpTimer(30);
+        setAuthError('');
+        console.log('New SATHEE Email OTP:', newOtp);
+      };
+
+      // OTP countdown timer for the prototype verification screens.
+      useEffect(() => {
+        if (authModal !== 'VERIFY_MOBILE' && authModal !== 'VERIFY_EMAIL') {
+          return;
+        }
+
+        const timer = setInterval(() => {
+          if (authModal === 'VERIFY_MOBILE') {
+            setMobileOtpTimer(prev => prev > 0 ? prev - 1 : 0);
+          }
+
+          if (authModal === 'VERIFY_EMAIL') {
+            setEmailOtpTimer(prev => prev > 0 ? prev - 1 : 0);
+          }
+        }, 1000);
+
+        return () => clearInterval(timer);
+      }, [authModal]);
 
       // --- BOOKING FLOW HANDLERS ---
       const handleConfirmBooking = () => {
@@ -629,7 +951,7 @@ const filteredStations = useMemo(() => {
           <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-slate-950 font-semibold text-xs py-1.5 px-4 flex justify-between items-center shadow-md">
             <div className="flex items-center space-x-2">
               <span className="bg-slate-950 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-extrabold">DEMO MODE</span>
-              <span>⚡ SATHEE Platform — India-Wide Academic & Discom Prototype (Simulated Data)</span>
+              <span>SATHEE Platform — India-Wide Academic & Discom Prototype (Simulated Data)</span>
             </div>
             <div className="hidden md:flex items-center space-x-4">
               <span>Selected Utility: <strong className="text-white">{operatorDiscom} ({operatorState})</strong></span>
@@ -644,7 +966,7 @@ const filteredStations = useMemo(() => {
               {/* Brand Logo */}
               <div className="flex items-center space-x-3 cursor-pointer" onClick={() => { setRole('USER'); setActiveTab('FIND_CHARGER'); }}>
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-400 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg shadow-emerald-500/20">
-                  ⚡
+                  S
                 </div>
                 <div>
                   <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-1">
@@ -689,6 +1011,12 @@ const filteredStations = useMemo(() => {
                       <span className="text-xs font-bold text-white">{currentUser.fullName}</span>
                       <span className="text-[10px] text-emerald-400 flex items-center justify-end gap-1">✓ Verified EV Owner</span>
                     </div>
+                    <button
+                      onClick={() => { setAuthError(''); setAuthModal('LOGIN'); }}
+                      className="hidden sm:block bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl text-[10px] font-bold transition"
+                    >
+                      Account
+                    </button>
                   </div>
                 ) : (
                   <button
@@ -761,18 +1089,31 @@ const filteredStations = useMemo(() => {
                         <option value="Fast">Fast (22kW)</option>
                       </select>
                     </div>
+                    <div>
+                      <select
+                        value={filterConnector}
+                        onChange={(e) => setFilterConnector(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                      >
+                        <option value="ALL">All Connectors</option>
+                        <option value="CCS2">CCS2</option>
+                        <option value="CHAdeMO">CHAdeMO</option>
+                        <option value="Type 2">Type 2</option>
+                        <option value="Bharat AC">Bharat AC</option>
+                      </select>
+                    </div>
                     <div className="flex gap-2">
                       <button 
                         onClick={() => setSearchQuery('Bengaluru')}
                         className="flex-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl py-2 px-3 border border-slate-700 transition"
                       >
-                        📍 Bengaluru
+                        Bengaluru
                       </button>
                       <button 
                         onClick={() => setSearchQuery('Mumbai')}
                         className="flex-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl py-2 px-3 border border-slate-700 transition"
                       >
-                        📍 Mumbai
+                        Mumbai
                       </button>
                     </div>
                   </div>
@@ -795,8 +1136,103 @@ const filteredStations = useMemo(() => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[600px]">
                   
                   {/* Leaflet Interactive Map View */}
-                  <div className="lg:col-span-7 bg-slate-900 p-3 rounded-2xl border border-slate-800 relative h-full">
-                    <div ref={mapContainerRef} className="w-full h-full rounded-xl"></div>
+                  <div
+                    className="lg:col-span-7 bg-slate-900 p-3 rounded-2xl border border-slate-800 h-full"
+                    style={{ position: 'relative', overflow: 'hidden' }}
+                  >
+                    <div
+                      ref={mapContainerRef}
+                      className="w-full h-full rounded-xl"
+                      style={{ position: 'relative', zIndex: 1 }}
+                    ></div>
+
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '16px',
+                        zIndex: 10000,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}
+                    >
+                      <button
+                        onClick={() => setShowDemandLayer(v => !v)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold shadow-lg border ${showDemandLayer ? 'bg-red-500 text-white border-red-400' : 'bg-slate-950/95 text-slate-200 border-slate-700'}`}
+                      >
+                        Demand Map
+                      </button>
+                      <button
+                        onClick={() => setShowRecommendedSites(v => !v)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold shadow-lg border ${showRecommendedSites ? 'bg-violet-500 text-white border-violet-400' : 'bg-slate-950/95 text-slate-200 border-slate-700'}`}
+                      >
+                        AI Sites
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLocationError('');
+                          if (!navigator.geolocation) {
+                            setLocationError('Geolocation is not supported by your browser.');
+                            return;
+                          }
+                          navigator.geolocation.getCurrentPosition(
+                            position => {
+                              const location = { lat: position.coords.latitude, lng: position.coords.longitude };
+                              setUserLocation(location);
+                              if (leafletMapRef.current) {
+                                leafletMapRef.current.setView([location.lat, location.lng], 14, { animate: true });
+                              }
+                            },
+                            () => setLocationError('Unable to access your location. Please allow location permission.')
+                          );
+                        }}
+                        className="px-3 py-2 rounded-lg text-xs font-bold shadow-lg border bg-slate-950/95 text-slate-200 border-slate-700 hover:border-blue-400"
+                      >
+                        Locate Me
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDemandLayer(false);
+                          setShowRecommendedSites(false);
+                          setUserLocation(null);
+                          setLocationError('');
+                          setSearchQuery('Bengaluru');
+                          setFilterSpeed('ALL');
+                          setFilterConnector('ALL');
+                          if (leafletMapRef.current) {
+                            leafletMapRef.current.setView([12.9716, 77.5946], 11, { animate: true });
+                          }
+                        }}
+                        className="px-3 py-2 rounded-lg text-xs font-bold shadow-lg border bg-slate-950/95 text-slate-200 border-slate-700 hover:border-emerald-400"
+                      >
+                        ↻ Reset
+                      </button>
+                    </div>
+
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '16px',
+                        right: '16px',
+                        zIndex: 10000
+                      }}
+                      className="bg-slate-950/95 border border-slate-700 rounded-xl p-3 text-[10px] text-slate-300 shadow-xl space-y-1.5"
+                    >
+                      <div className="font-bold text-white mb-1">Map Legend</div>
+                      <div>Available Charger</div>
+                      <div>Limited Availability</div>
+                      <div>Unavailable</div>
+                      <div>Demand Hotspot</div>
+                      <div>AI Recommended Site</div>
+                      <div>Your Location</div>
+                    </div>
+
+                    {locationError && (
+                      <div className="absolute bottom-6 left-6 z-[1000] bg-red-500 text-white text-xs px-3 py-2 rounded-lg shadow-lg max-w-xs">
+                        {locationError}
+                      </div>
+                    )}
                   </div>
 
                   {/* Station Cards Column */}
@@ -804,7 +1240,12 @@ const filteredStations = useMemo(() => {
                     {filteredStations.map((st) => (
                       <div
                         key={st.id}
-                        onClick={() => setSelectedStation(st)}
+                        onClick={() => {
+                          setSelectedStation(st);
+                          if (leafletMapRef.current) {
+                            leafletMapRef.current.setView([st.lat, st.lng], 14, { animate: true });
+                          }
+                        }}
                         className={`bg-slate-900 border rounded-2xl p-5 cursor-pointer transition-all hover:border-emerald-500/50 ${selectedStation.id === st.id ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-slate-900/90' : 'border-slate-800'}`}
                       >
                         <div className="flex justify-between items-start mb-2">
@@ -816,7 +1257,7 @@ const filteredStations = useMemo(() => {
                             <p className="text-xs text-slate-400 mt-0.5">{st.address}</p>
                           </div>
                           <div className="text-right">
-                            <span className="text-xs font-extrabold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">⭐ {st.rating}</span>
+                            <span className="text-xs font-extrabold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">{st.rating}</span>
                           </div>
                         </div>
 
@@ -998,7 +1439,7 @@ const filteredStations = useMemo(() => {
                         <span className="text-[10px] bg-cyan-400/20 text-cyan-300 px-2 py-0.5 rounded font-bold">DISCOM Dynamic Tariff Active</span>
                       </div>
                       <p className="text-xs text-slate-300">
-                        ⚡ Recommended Slot: <strong className="text-emerald-400">08:00 PM - 09:00 PM</strong> (Lowest predicted grid stress & 15% tariff discount)
+                        Recommended Slot: <strong className="text-emerald-400">08:00 PM - 09:00 PM</strong> (Lowest predicted grid stress & 15% tariff discount)
                       </p>
                       <button
                         onClick={() => setBookingDraft({ ...bookingDraft, timeSlot: '08:00 PM - 09:00 PM' })}
@@ -1072,6 +1513,57 @@ const filteredStations = useMemo(() => {
                       />
                     </div>
 
+                    {/* DEMO PAYMENT QR - VISUAL ONLY */}
+                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col items-center justify-center gap-3">
+                      <div className="text-center">
+                        <p className="text-xs font-black text-white">Scan to Pay</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Demo QR for presentation only</p>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-xl shadow-xl">
+                        <div
+                          className="grid grid-cols-13 gap-0.5 w-40 h-40 bg-white"
+                          aria-label="Demo payment QR code"
+                        >
+                          {Array.from({ length: 169 }).map((_, i) => {
+                            const row = Math.floor(i / 13);
+                            const col = i % 13;
+
+                            const finder = (r, c) =>
+                              (r < 5 && c < 5) ||
+                              (r < 5 && c > 7) ||
+                              (r > 7 && c < 5);
+
+                            const inFinder =
+                              (row < 5 && col < 5) ||
+                              (row < 5 && col > 7) ||
+                              (row > 7 && col < 5);
+
+                            let dark = false;
+
+                            if (finder(row, col)) {
+                              const fr = row < 5 ? row : row - 8;
+                              const fc = col < 5 ? col : col - 8;
+                              dark = fr === 0 || fr === 4 || fc === 0 || fc === 4 || (fr >= 1 && fr <= 3 && fc >= 1 && fc <= 3);
+                            } else if (!inFinder) {
+                              dark = ((row * 7 + col * 11 + row * col) % 5) < 2;
+                            }
+
+                            return (
+                              <div
+                                key={i}
+                                className={dark ? 'bg-slate-950' : 'bg-white'}
+                              ></div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider">
+                        Not connected to a real payment gateway
+                      </span>
+                    </div>
+
                     <div className="flex gap-3">
                       <button onClick={() => setBookingStep(3)} className="flex-1 bg-slate-800 text-slate-300 py-3 rounded-xl font-bold text-xs">← BACK</button>
                       <button
@@ -1112,7 +1604,7 @@ const filteredStations = useMemo(() => {
                         onClick={() => handleStartCharging(bookings[0])}
                         className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-black text-xs transition shadow-lg"
                       >
-                        ⚡ START CHARGING NOW (SIMULATION)
+                        START CHARGING NOW (SIMULATION)
                       </button>
                       <button
                         onClick={() => setActiveTab('MY_BOOKINGS')}
@@ -1154,7 +1646,7 @@ const filteredStations = useMemo(() => {
                           onClick={() => handleStartCharging(b)}
                           className="flex-1 md:flex-none bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl font-extrabold text-xs transition"
                         >
-                          ⚡ START CHARGING
+                          START CHARGING
                         </button>
                         <button
                           onClick={() => setBookings(bookings.filter(x => x.id !== b.id))}
@@ -1233,7 +1725,7 @@ const filteredStations = useMemo(() => {
                 <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 text-center space-y-6 relative overflow-hidden shadow-2xl">
                   
                   <div className="inline-block bg-emerald-500/10 text-emerald-400 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                    ⚡ LIVE CHARGING SESSION IN PROGRESS
+                    LIVE CHARGING SESSION IN PROGRESS
                   </div>
 
                   {/* Charging Progress Ring / Meter */}
@@ -1273,7 +1765,7 @@ const filteredStations = useMemo(() => {
                     onClick={handleStopCharging}
                     className="w-full bg-red-500 hover:bg-red-400 text-slate-950 py-3.5 rounded-2xl font-black text-sm transition shadow-lg shadow-red-500/20"
                   >
-                    ⏹ STOP CHARGING & SAVE SESSION
+                    STOP CHARGING & SAVE SESSION
                   </button>
                 </div>
               </div>
@@ -1459,10 +1951,10 @@ const filteredStations = useMemo(() => {
                   </div>
 
                   <button
-                    onClick={() => alert('⚡ SATHEE Optimization Algorithm executed! Peak load reduced by 27.5%. Target signals dispatched to participating EV users.')}
+                    onClick={() => alert('SATHEE Optimization Algorithm executed! Peak load reduced by 27.5%. Target signals dispatched to participating EV users.')}
                     className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-3.5 rounded-xl font-black text-sm transition shadow-lg shadow-cyan-500/20"
                   >
-                    ⚡ RUN REAL-TIME PEAK SHAVING OPTIMIZATION
+                    RUN REAL-TIME PEAK SHAVING OPTIMIZATION
                   </button>
                 </div>
               </div>
@@ -1626,7 +2118,7 @@ const filteredStations = useMemo(() => {
 
           {/* FOOTER */}
           <footer className="bg-slate-950 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-            <p>SATHEE ⚡ Smart AI EV Charging & Grid Intelligence Platform — Academic & DISCOM Prototype</p>
+            <p>SATHEE Smart AI EV Charging & Grid Intelligence Platform — Academic & DISCOM Prototype</p>
             <p className="mt-1">Designed for India-Wide Electric Mobility Optimization</p>
           </footer>
 
@@ -1641,14 +2133,14 @@ const filteredStations = useMemo(() => {
 
                 {authError && (
                   <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl font-bold">
-                    ⚠️ {authError}
+                    {authError}
                   </div>
                 )}
 
                 {/* LOGIN FORM */}
                 {authModal === 'LOGIN' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-black text-white">Login to SATHEE ⚡</h3>
+                    <h3 className="text-lg font-black text-white">Login to SATHEE</h3>
                     <input
                       type="text"
                       placeholder="Mobile (+91) or Email"
@@ -1679,97 +2171,231 @@ const filteredStations = useMemo(() => {
 
                 {/* REGISTER FORM */}
                 {authModal === 'REGISTER' && (
-                  <form onSubmit={handleRegisterSubmit} className="space-y-3">
-                    <h3 className="text-lg font-black text-white">Create SATHEE Account</h3>
-                    <input
-                      type="text"
-                      placeholder="Full Name (e.g. Ankit Sharma)"
-                      required
-                      value={authForm.fullName}
-                      onChange={(e) => setAuthForm({ ...authForm, fullName: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
-                    />
-                    <input
-                      type="tel"
-                      placeholder="Mobile Number (+91 XXXXX XXXXX)"
-                      required
-                      value={authForm.mobile}
-                      onChange={(e) => setAuthForm({ ...authForm, mobile: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
-                    />
-                    <input
-                      type="email"
-                      placeholder="Email Address"
-                      required
-                      value={authForm.email}
-                      onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      required
-                      value={authForm.password}
-                      onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Confirm Password"
-                      required
-                      value={authForm.confirmPassword}
-                      onChange={(e) => setAuthForm({ ...authForm, confirmPassword: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white"
-                    />
-                    <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3 rounded-xl font-black text-xs shadow-lg">
-                      CREATE ACCOUNT & VERIFY →
+                  <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                    <div>
+                      <h3 className="text-xl font-black text-white">Create SATHEE Account</h3>
+                      <p className="text-xs text-slate-400 mt-1">Register to access EV charging services.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1.5">Full Name</label>
+                      <input
+                        type="text"
+                        placeholder="Enter your full name"
+                        required
+                        value={authForm.fullName}
+                        onChange={(e) => setAuthForm({ ...authForm, fullName: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-xl p-3 text-sm text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1.5">Mobile Number</label>
+                      <div className="flex">
+                        <span className="bg-slate-800 border border-slate-700 border-r-0 rounded-l-xl px-3 flex items-center text-xs text-slate-400">+91</span>
+                        <input
+                          type="tel"
+                          placeholder="10-digit mobile number"
+                          maxLength="10"
+                          required
+                          value={authForm.mobile.replace('+91 ', '')}
+                          onChange={(e) => setAuthForm({ ...authForm, mobile: e.target.value.replace(/\D/g, '') })}
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-r-xl p-3 text-sm text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1.5">Email Address</label>
+                      <input
+                        type="email"
+                        placeholder="you@example.com"
+                        required
+                        value={authForm.email}
+                        onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-xl p-3 text-sm text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1.5">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Minimum 8 characters"
+                          required
+                          value={authForm.password}
+                          onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-xl p-3 pr-20 text-sm text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 font-bold"
+                        >
+                          {showPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1.5">Confirm Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder="Re-enter your password"
+                          required
+                          value={authForm.confirmPassword}
+                          onChange={(e) => setAuthForm({ ...authForm, confirmPassword: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-xl p-3 pr-20 text-sm text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 font-bold"
+                        >
+                          {showConfirmPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3.5 rounded-xl font-black text-sm shadow-lg transition">
+                      CREATE ACCOUNT
                     </button>
                   </form>
                 )}
 
                 {/* MOBILE OTP */}
                 {authModal === 'VERIFY_MOBILE' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-black text-white">Verify Mobile Number</h3>
-                    <p className="text-xs text-slate-400">We sent a verification code to {authForm.mobile || '+91 9876543210'}</p>
-                    <div className="bg-emerald-500/10 border border-emerald-500/30 p-2.5 rounded-xl text-xs text-emerald-400 font-bold text-center">
-                      Demo OTP Code: 123456
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-xl font-black text-white">Verify Mobile Number</h3>
+                      <p className="text-xs text-slate-400 mt-1">Enter the 6-digit verification code sent to</p>
+                      <p className="text-sm text-emerald-400 font-bold mt-1">+91 {authForm.mobile}</p>
                     </div>
+
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-black">Prototype Mode</p>
+                      <p className="text-xs text-slate-300 mt-1">Your demo OTP is:</p>
+                      <p className="text-xl font-black text-white tracking-widest mt-1">{generatedMobileOtp}</p>
+                    </div>
+
                     <input
                       type="text"
-                      placeholder="Enter 6-digit Mobile OTP"
+                      inputMode="numeric"
                       maxLength="6"
+                      placeholder="Enter 6-digit OTP"
                       value={mobileOtp}
-                      onChange={(e) => setMobileOtp(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-center text-lg font-mono tracking-widest text-white"
+                      onChange={(e) => setMobileOtp(e.target.value.replace(/\D/g, ''))}
+                      className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-xl p-4 text-center text-xl font-mono tracking-[0.5em] text-white"
                     />
-                    <button onClick={handleVerifyMobile} className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3 rounded-xl font-black text-xs">
-                      VERIFY MOBILE OTP ✓
+
+                    <button onClick={handleVerifyMobile} className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3.5 rounded-xl font-black text-sm">
+                      VERIFY MOBILE
                     </button>
+
+                    <div className="text-center">
+                      {mobileOtpTimer > 0 ? (
+                        <p className="text-xs text-slate-500">Resend OTP in <span className="text-emerald-400 font-bold">{mobileOtpTimer}s</span></p>
+                      ) : (
+                        <button type="button" onClick={resendMobileOtp} className="text-xs text-emerald-400 font-bold hover:underline">Resend OTP</button>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* EMAIL OTP */}
                 {authModal === 'VERIFY_EMAIL' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-black text-white">Verify Email Address</h3>
-                    <p className="text-xs text-slate-400">We sent a verification code to {authForm.email || 'user@example.com'}</p>
-                    <div className="bg-emerald-500/10 border border-emerald-500/30 p-2.5 rounded-xl text-xs text-emerald-400 font-bold text-center">
-                      Demo Email OTP Code: 654321
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-xl font-black text-white">Verify Email Address</h3>
+                      <p className="text-xs text-slate-400 mt-1">Enter the 6-digit verification code sent to</p>
+                      <p className="text-sm text-emerald-400 font-bold mt-1 break-all">{authForm.email}</p>
                     </div>
+
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-black">Prototype Mode</p>
+                      <p className="text-xs text-slate-300 mt-1">Your demo OTP is:</p>
+                      <p className="text-xl font-black text-white tracking-widest mt-1">{generatedEmailOtp}</p>
+                    </div>
+
                     <input
                       type="text"
-                      placeholder="Enter 6-digit Email OTP"
+                      inputMode="numeric"
                       maxLength="6"
+                      placeholder="Enter 6-digit OTP"
                       value={emailOtp}
-                      onChange={(e) => setEmailOtp(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-center text-lg font-mono tracking-widest text-white"
+                      onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
+                      className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none rounded-xl p-4 text-center text-xl font-mono tracking-[0.5em] text-white"
                     />
-                    <button onClick={handleVerifyEmail} className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3 rounded-xl font-black text-xs">
-                      VERIFY EMAIL & COMPLETE ✓
+
+                    <button onClick={handleVerifyEmail} className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3.5 rounded-xl font-black text-sm">
+                      VERIFY EMAIL
+                    </button>
+
+                    <div className="text-center">
+                      {emailOtpTimer > 0 ? (
+                        <p className="text-xs text-slate-500">Resend OTP in <span className="text-emerald-400 font-bold">{emailOtpTimer}s</span></p>
+                      ) : (
+                        <button type="button" onClick={resendEmailOtp} className="text-xs text-emerald-400 font-bold hover:underline">Resend OTP</button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* REGISTRATION SUCCESS */}
+                {authModal === 'REGISTER_SUCCESS' && (
+                  <div className="text-center space-y-6">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+                      <span className="text-3xl text-emerald-400">✓</span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-2xl font-black text-white">Account Created</h3>
+                      <p className="text-sm text-slate-400 mt-2">Welcome to SATHEE, {currentUser.fullName}.</p>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 text-left space-y-3">
+                      <div className="flex justify-between gap-4">
+                        <span className="text-xs text-slate-500">Name</span>
+                        <span className="text-xs text-white font-bold text-right">{currentUser.fullName}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-xs text-slate-500">Mobile</span>
+                        <span className="text-xs text-emerald-400 font-bold text-right">{currentUser.mobile}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-xs text-slate-500">Email</span>
+                        <span className="text-xs text-emerald-400 font-bold text-right break-all">{currentUser.email}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-xs text-slate-500">Verification</span>
+                        <span className="text-xs text-emerald-400 font-bold text-right">Mobile + Email Verified</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setAuthModal(null);
+                        setAuthForm({ fullName: '', mobile: '', email: '', password: '', confirmPassword: '' });
+                        setMobileOtp('');
+                        setEmailOtp('');
+                        setGeneratedMobileOtp('');
+                        setGeneratedEmailOtp('');
+                        setMobileOtpTimer(30);
+                        setEmailOtpTimer(30);
+                        setAuthError('');
+                        setAuthSuccess('');
+                        setShowPassword(false);
+                        setShowConfirmPassword(false);
+                      }}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3.5 rounded-xl font-black text-sm"
+                    >
+                      ENTER SATHEE
                     </button>
                   </div>
                 )}
+
 
               </div>
             </div>
